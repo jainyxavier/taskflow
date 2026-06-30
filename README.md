@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# 📋 TaskFlow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+O **TaskFlow** é uma aplicação web de gerenciamento de tarefas inspirada em ferramentas como o ClickUp. O projeto permite criar, editar, excluir e organizar tarefas em um quadro Kanban de forma simples e intuitiva. Além disso, as tarefas podem ser movidas entre colunas, filtradas por diferentes critérios e armazenadas no navegador utilizando o Local Storage.
 
-Currently, two official plugins are available:
+## ✨ Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* Criar tarefas
+* Editar tarefas
+* Excluir tarefas
+* Organizar tarefas em um quadro Kanban
+* Mover tarefas entre colunas (Drag and Drop)
+* Filtrar tarefas
+* Persistir dados no navegador com Local Storage
+* Layout responsivo
 
-## React Compiler
+## 🚀 Tecnologias
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* React Icons
+* Local Storage
 
-## Expanding the ESLint configuration
+## 📂 Estrutura do projeto
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+├── assets/
+├── components/
+├── hooks/
+├── pages/
+├── types/
+├── utils/
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ▶️ Como executar o projeto
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Clone o repositório:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone <url-do-repositorio>
 ```
+
+Acesse a pasta do projeto:
+
+```bash
+cd taskflow
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Execute a aplicação:
+
+```bash
+npm run dev
+```
+
+A aplicação estará disponível em:
+
+```text
+http://localhost:5173
+```
+
+---
+
+Desenvolvido por **Jaíny Xavier** 💜
