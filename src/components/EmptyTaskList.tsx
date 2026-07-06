@@ -1,5 +1,5 @@
 import { LiaClipboardListSolid } from "react-icons/lia";
-import Button from "./Button";
+import AddTaskBtn from "./AddTaskBtn";
 
 export default function EmptyTaskList() {
     return (
@@ -20,7 +20,7 @@ export default function EmptyTaskList() {
                 </p>
             </div>
 
-            <Button size="lg">Criar primeira tarefa</Button>
+            <AddTaskBtn buttonText="Criar primeira tarefa" />
         </section>
     );
 }

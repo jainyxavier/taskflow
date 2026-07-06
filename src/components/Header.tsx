@@ -1,5 +1,5 @@
 import { LuClipboardCheck } from "react-icons/lu";
-import Button from "./Button";
+import AddTaskBtn from "./AddTaskBtn";
 
 export default function Header() {
     return (
@@ -15,9 +15,7 @@ export default function Header() {
                     </h2>
                 </div>
 
-                <Button size="sm">
-                    <span className="sr-only sm:not-sr-only">Nova Tarefa</span>
-                </Button>
+                <AddTaskBtn buttonText="Nova Tarefa" />
             </div>
         </header>
     );
