@@ -1,12 +1,16 @@
 import { LiaClipboardListSolid } from "react-icons/lia";
 import AddTaskBtn from "./AddTaskBtn";
 
-export default function EmptyTaskList() {
+type EmptyTaskListProps = {
+    onAddTask: () => void;
+};
+
+export default function EmptyTaskList({ onAddTask }: EmptyTaskListProps) {
     return (
-        <section className="mx-auto flex w-full max-w-[800px] flex-col items-center justify-center gap-5 rounded-2xl bg-white px-4 py-8 text-center shadow-sm sm:gap-6 sm:px-6 sm:py-10 md:gap-7 md:px-8">
+        <section className="mx-auto flex w-full max-w-200 flex-col items-center justify-center gap-5 rounded-2xl bg-white px-4 py-8 text-center shadow-sm sm:gap-6 sm:px-6 sm:py-10 md:gap-7 md:px-8">
             <div className="flex items-center justify-center rounded-full bg-[#F3F1FF] p-4 sm:p-5">
                 <LiaClipboardListSolid
-                    className="h-24 w-24 text-[#B8B4D9] sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-[200px] lg:w-[200px]"
+                    className="h-24 w-24 text-[#B8B4D9] sm:h-32 sm:w-32 md:h-40 md:w-40 lg:h-50 lg:w-50"
                 />
             </div>
 
@@ -20,7 +24,7 @@ export default function EmptyTaskList() {
                 </p>
             </div>
 
-            <AddTaskBtn buttonText="Criar primeira tarefa" />
+            <AddTaskBtn buttonText="Criar primeira tarefa" onClick={onAddTask} size="lg" />
         </section>
     );
 }
