@@ -1,26 +1,63 @@
 import { FaRegCalendarAlt } from "react-icons/fa";
-import { LuCircle } from "react-icons/lu";
 import type { Task } from "../types/task";
 
 interface TaskCardProps {
     task: Task;
 }
 
+const blueVariant = ["bg-[#f0f8ff]", "bg-blue-500"]
+const yellowVariant = ["bg-[#FFF9E8]", "bg-yellow-500"]
+const greenVariant = ["bg-[#F0FDF4]", "bg-green-500"]
+
 export default function TaskCard({task}: TaskCardProps) {
+
+    function getTaskCardColor(status: string) {
+        if(status == "A fazer") {
+            return blueVariant
+        }
+
+        if(status == "Em andamento") {
+            return yellowVariant
+        }
+
+        if(status == "Concluído") {
+            return greenVariant
+        }
+
+        return blueVariant;
+    }
+
+    const [bgColor, sidebarColor] = getTaskCardColor(task.status)
+    
     return (
-        <li className="rounded-2xl flex bg-[#f0f8ff] shadow-sm hover:shadow-md">
+        <li className={`rounded-2xl flex ${bgColor} shadow-sm hover:shadow-md`}>
             {/* Barra lateral */}
-            <div className="w-1.5 rounded-l-2xl bg-blue-500" />
+            <div className={`w-1.5 rounded-l-2xl ${sidebarColor}`} />
 
             <div className="flex w-full items-center justify-between gap-6 p-6">
                 <div className="flex flex-1 items-start gap-5">
                     {/* Checkbox */}
-                    <button
-                        type="button"
-                        className="mt-1 text-[#C7C9D1] transition-colors hover:text-[#7C3AED]"
-                    >
-                        <LuCircle size={30} />
-                    </button>
+                    <label className="mt-1 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            className="peer sr-only"
+                        />
+
+                        <div
+                            className="
+                                flex size-5 items-center justify-center
+                                rounded-full
+                                border-2 border-[#C7C9D1]
+                                bg-white
+                                transition-all duration-200
+                                hover:border-[#7C3AED]
+                                peer-checked:border-[#7C3AED]
+                                peer-checked:bg-[#7C3AED]
+                                peer-focus:ring-2 peer-focus:ring-[#7C3AED]/20
+                            "
+                        >
+                        </div>
+                    </label>
 
                     {/* Conteúdo */}
                     <div className="flex flex-col">
