@@ -32,7 +32,7 @@ export const statusInProgress: StatusSectionType = {
             title: "Estudar React e TypeScript",
             description: "Aprofundar conhecimentos sobre Hooks, Context API e boas práticas de desenvolvimento.",
             status: "Em andamento",
-            priority: "Alta",
+            priority: "Média",
             isChecked: false,
             createdAt: "10/10/2026"
         },
@@ -41,7 +41,7 @@ export const statusInProgress: StatusSectionType = {
             title: "Estudar React e TypeScript",
             description: "Aprofundar conhecimentos sobre Hooks, Context API e boas práticas de desenvolvimento.",
             status: "Em andamento",
-            priority: "Alta",
+            priority: "Média",
             isChecked: false,
             createdAt: "10/10/2026"
         }
@@ -56,7 +56,7 @@ export const statusCompleted: StatusSectionType = {
             title: "Estudar React e TypeScript",
             description: "Aprofundar conhecimentos sobre Hooks, Context API e boas práticas de desenvolvimento.",
             status: "Concluído",
-            priority: "Alta",
+            priority: "Baixa",
             isChecked: false,
             createdAt: "10/10/2026"
         },
@@ -65,7 +65,7 @@ export const statusCompleted: StatusSectionType = {
             title: "Estudar React e TypeScript",
             description: "Aprofundar conhecimentos sobre Hooks, Context API e boas práticas de desenvolvimento.",
             status: "Concluído",
-            priority: "Alta",
+            priority: "Baixa",
             isChecked: false,
             createdAt: "10/10/2026"
         }
