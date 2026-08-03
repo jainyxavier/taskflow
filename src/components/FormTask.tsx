@@ -6,20 +6,25 @@ import RequiredMark from "./RequiredMark";
 import { useTaskForm } from "../hooks/useTaskForm";
 import { fieldClassName, labelClassName } from "../constants/form.constants";
 import { priorityOptions, statusOptions } from "../constants/taskOptions";
+import type { Task, TaskFormData } from "../types/task";
 
 type FormTaskProps = {
     onClose: () => void;
+    taskToEdit?: Task | null;
+    onSave: (formData: TaskFormData) => void;
 };
 
-export default function FormTask({ onClose }: FormTaskProps) {
+export default function FormTask({ onClose, taskToEdit, onSave }: FormTaskProps) {
     const {
         formData,
         errors,
+        isEditing,
         updateField,
         handleInputChange,
         handleSubmit,
     } = useTaskForm({
-        onSuccess: onClose,
+        taskToEdit,
+        onSuccess: onSave,
     });
 
     return (
@@ -28,7 +33,7 @@ export default function FormTask({ onClose }: FormTaskProps) {
                 id="form-task-title"
                 className="pr-12 text-xl font-bold text-[#111827] sm:text-2xl"
             >
-                Nova tarefa
+                {isEditing ? "Editar tarefa" : "Nova tarefa"}
             </h2>
 
             <form
@@ -37,10 +42,7 @@ export default function FormTask({ onClose }: FormTaskProps) {
                 noValidate
             >
                 <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="title"
-                        className={labelClassName}
-                    >
+                    <label htmlFor="title" className={labelClassName}>
                         Título <RequiredMark />
                     </label>
 
@@ -62,10 +64,7 @@ export default function FormTask({ onClose }: FormTaskProps) {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="description"
-                        className={labelClassName}
-                    >
+                    <label htmlFor="description" className={labelClassName}>
                         Descrição
                     </label>
 
@@ -81,10 +80,7 @@ export default function FormTask({ onClose }: FormTaskProps) {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="status"
-                        className={labelClassName}
-                    >
+                    <label htmlFor="status" className={labelClassName}>
                         Status <RequiredMark />
                     </label>
 
@@ -94,19 +90,14 @@ export default function FormTask({ onClose }: FormTaskProps) {
                         options={statusOptions}
                         placeholder="Selecione o status"
                         hasError={Boolean(errors.status)}
-                        onChange={(value) =>
-                            updateField("status", value)
-                        }
+                        onChange={(value) => updateField("status", value)}
                     />
 
                     <FieldError message={errors.status} />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="priority"
-                        className={labelClassName}
-                    >
+                    <label htmlFor="priority" className={labelClassName}>
                         Prioridade <RequiredMark />
                     </label>
 
@@ -116,19 +107,14 @@ export default function FormTask({ onClose }: FormTaskProps) {
                         options={priorityOptions}
                         placeholder="Selecione a prioridade"
                         hasError={Boolean(errors.priority)}
-                        onChange={(value) =>
-                            updateField("priority", value)
-                        }
+                        onChange={(value) => updateField("priority", value)}
                     />
 
                     <FieldError message={errors.priority} />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor="date"
-                        className={labelClassName}
-                    >
+                    <label htmlFor="date" className={labelClassName}>
                         Data de criação
                     </label>
 
@@ -158,12 +144,8 @@ export default function FormTask({ onClose }: FormTaskProps) {
                         Cancelar
                     </button>
 
-                    <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full sm:w-auto"
-                    >
-                        Criar tarefa
+                    <Button type="submit" size="lg" className="w-full sm:w-auto">
+                        {isEditing ? "Salvar alterações" : "Criar tarefa"}
                     </Button>
                 </div>
             </form>

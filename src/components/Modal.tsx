@@ -8,8 +8,6 @@ type ModalProps = {
 };
 
 export default function Modal({ isOpen, onClose, children }: ModalProps) {
-    useEffect(() => {}, []);
-
     useEffect(() => {
         if (!isOpen) return;
 

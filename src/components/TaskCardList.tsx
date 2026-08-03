@@ -1,132 +1,105 @@
+import { useMemo } from "react";
 import { LuBadgeCheck, LuChevronUp, LuCircleDashed, LuRefreshCw } from "react-icons/lu";
 import TaskCard from "../components/TaskCard";
-import { statusToDo, statusInProgress, statusCompleted } from "../constants/taskList.contants";
+import type { Task } from "../types/task";
+import { groupTasksByStatus } from "../utils/groupTasksByStatus";
 
-export default function TaskCardList() {
+type TaskCardListProps = {
+    tasks: Task[];
+    onEditTask: (task: Task) => void;
+};
+
+const statusSections = [
+    {
+        key: "todo",
+        status: "A fazer",
+        icon: LuCircleDashed,
+        iconClass: "bg-[#4F6EF7] text-white",
+        badgeClass: "bg-[#E8EBFF] text-[#365CF5]",
+    },
+    {
+        key: "in-progress",
+        status: "Em andamento",
+        icon: LuRefreshCw,
+        iconClass: "bg-[#FDBA1A] text-[#111827]",
+        badgeClass: "bg-[#FFF3D6] text-[#C97A00]",
+    },
+    {
+        key: "completed",
+        status: "Concluído",
+        icon: LuBadgeCheck,
+        iconClass: "bg-[#22C55E] text-white",
+        badgeClass: "bg-[#DCFCE7] text-[#15803D]",
+    },
+] as const;
+
+export default function TaskCardList({ tasks, onEditTask }: TaskCardListProps) {
+    const tasksByStatus = useMemo(() => groupTasksByStatus(tasks), [tasks]);
+
     return (
         <section>
             <div className="flex w-full flex-col gap-2 sm:my-8 md:my-10 md:gap-2.5">
-                <h1 className="text-4xl font-bold tracking-tight text-[#111827] sm:text-3xl md:text-4xl lg:text-5xl">
+                <h1 className="text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl md:text-4xl lg:text-5xl">
                     Minhas<span className="text-[#7C3AED]">Tarefas</span>
                 </h1>
 
-                <p className="max-w-xl text-xl font-semibold text-[#6B7280]">
+                <p className="max-w-xl text-base font-semibold text-[#6B7280] sm:text-lg md:text-xl">
                     Organize, priorize e conclua suas tarefas
                 </p>
             </div>
 
-            <ul className="flex flex-col gap-8">
-                {/* a fazer */}
-                <li>
-                    <section className="rounded-3xl bg-white/60 p-6 shadow-sm">
-                        <div className="flex items-start justify-between mb-7">
-                            <div className="flex items-center gap-5">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-[#4F6EF7] text-white shadow-sm">
-                                    <LuCircleDashed size={26} />
-                                </div>
+            <ul className="flex flex-col gap-5 sm:gap-6 md:gap-8">
+                {statusSections.map(({ key, status, icon: SectionIcon, iconClass, badgeClass }) => {
+                    const sectionTasks = tasksByStatus[status] ?? [];
 
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-bold tracking-tight text-[#172554]">
-                                            {statusToDo.sectionTitle}
-                                        </h2>
+                    return (
+                        <li key={key}>
+                            <section className="rounded-2xl bg-white/60 p-4 shadow-sm sm:rounded-3xl sm:p-5 md:p-6">
+                                <div className="mb-5 flex items-start justify-between gap-3 sm:mb-6 md:mb-7">
+                                    <div className="flex min-w-0 items-center gap-3 sm:gap-4 md:gap-5">
+                                        <div
+                                            className={`flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm sm:size-12 md:size-14 md:rounded-2xl ${iconClass}`}
+                                        >
+                                            <SectionIcon className="size-5 sm:size-6 md:size-6.5" />
+                                        </div>
 
-                                        <span className="rounded-full bg-[#E8EBFF] px-5 py-2 text-lg font-semibold text-[#365CF5]">
-                                            {statusToDo.tasks.length} tarefas
-                                        </span>
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                                <h2 className="text-lg font-bold tracking-tight text-[#172554] sm:text-xl md:text-2xl">
+                                                    {status}
+                                                </h2>
+
+                                                <span
+                                                    className={`rounded-full px-3 py-1 text-sm font-semibold sm:px-4 sm:py-1.5 sm:text-base md:px-5 md:py-2 md:text-lg ${badgeClass}`}
+                                                >
+                                                    {sectionTasks.length} tarefas
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <button className="flex size-14 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#111827] shadow-sm transition hover:bg-[#F9FAFB]">
-                                <LuChevronUp size={26} />
-                            </button>
-                        </div>
-
-                        <ol className="transition-all flex flex-col gap-5">
-                            {statusToDo.tasks.map(task => {
-                                return (
-                                    <TaskCard key={task.id} task={task} />
-                                )
-                            })}
-                        </ol>
-                    </section>
-                </li>
-
-                {/* em andamento */}
-                <li>
-                    <section className="rounded-3xl bg-white/60 p-6 shadow-sm">
-                        <div className="flex items-start justify-between mb-7">
-                            <div className="flex items-center gap-5">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-[#FDBA1A] text-[#111827] shadow-sm">
-                                    <LuRefreshCw size={26} />
+                                    <button
+                                        type="button"
+                                        className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#111827] shadow-sm transition hover:bg-[#F9FAFB] sm:size-11 md:size-14 md:rounded-2xl"
+                                    >
+                                        <LuChevronUp className="size-5 sm:size-6 md:size-6.5" />
+                                    </button>
                                 </div>
 
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-bold tracking-tight text-[#172554]">
-                                            {statusInProgress.sectionTitle}
-                                        </h2>
-
-                                        <span className="rounded-full bg-[#FFF3D6] px-5 py-2 text-lg font-semibold text-[#C97A00]">
-                                            {statusInProgress.tasks.length} tarefas
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button className="flex size-14 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#111827] shadow-sm transition hover:bg-[#F9FAFB]">
-                                <LuChevronUp size={26} />
-                            </button>
-                        </div>
-
-                        <ol className="transition-all flex flex-col gap-5">
-                            {statusInProgress.tasks.map(task => {
-                                return (
-                                    <TaskCard key={task.id} task={task} />
-                                )
-                            })}
-                        </ol>
-                    </section>
-                </li>
-
-                {/* concluído */}
-                <li>
-                    <section className="rounded-3xl bg-white/60 p-6 shadow-sm">
-                        <div className="flex items-start justify-between mb-7">
-                            <div className="flex items-center gap-5">
-                                <div className="flex size-14 items-center justify-center rounded-2xl bg-[#22C55E] text-white shadow-sm">
-                                    <LuBadgeCheck size={26} />
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-2xl font-bold tracking-tight text-[#172554]">
-                                            {statusCompleted.sectionTitle}
-                                        </h2>
-
-                                        <span className="rounded-full bg-[#DCFCE7] px-5 py-2 text-lg font-semibold text-[#15803D]">
-                                            {statusCompleted.tasks.length} tarefas
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button className="flex size-14 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white text-[#111827] shadow-sm transition hover:bg-[#F9FAFB]">
-                                <LuChevronUp size={26} />
-                            </button>
-                        </div>
-
-                        <ol className="transition-all flex flex-col gap-5">
-                            {statusCompleted.tasks.map(task => {
-                                return (
-                                    <TaskCard key={task.id} task={task} />
-                                )
-                            })}
-                        </ol>
-                    </section>
-                </li>
+                                <ol className="flex flex-col gap-3 transition-all sm:gap-4 md:gap-5">
+                                    {sectionTasks.map((task) => (
+                                        <TaskCard
+                                            key={task.id}
+                                            task={task}
+                                            onEdit={() => onEditTask(task)}
+                                        />
+                                    ))}
+                                </ol>
+                            </section>
+                        </li>
+                    );
+                })}
             </ul>
         </section>
-    )
+    );
 }
