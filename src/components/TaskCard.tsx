@@ -1,112 +1,102 @@
 import { FaCheck, FaRegCalendarAlt } from "react-icons/fa";
 import type { Task } from "../types/task";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
-import { useState } from "react";
 
 interface TaskCardProps {
     task: Task;
+    onEdit: () => void;
+    onDelete: (id: number) => void;
+    onToggleTask: (id: number) => void;
 }
 
-const blueVariant = ["bg-[#f0f8ff]", "bg-blue-500"]
-const yellowVariant = ["bg-[#FFF9E8]", "bg-yellow-500"]
-const greenVariant = ["bg-[#F0FDF4]", "bg-green-500"]
+const statusVariants: Record<string, [string, string]> = {
+    "A fazer": ["bg-[#f0f8ff]", "bg-blue-500"],
+    "Em andamento": ["bg-[#FFF9E8]", "bg-yellow-500"],
+    "Concluído": ["bg-[#F0FDF4]", "bg-green-500"],
+};
 
-export default function TaskCard({task}: TaskCardProps) {
+const priorityBadgeVariants: Record<string, { container: string; dot: string; text: string }> = {
+    Alta: {
+        container: "border-red-100 bg-red-50",
+        dot: "bg-red-500",
+        text: "text-red-700",
+    },
+    Média: {
+        container: "border-yellow-100 bg-yellow-50",
+        dot: "bg-yellow-500",
+        text: "text-yellow-700",
+    },
+    Baixa: {
+        container: "border-green-100 bg-green-50",
+        dot: "bg-green-500",
+        text: "text-green-700",
+    },
+};
 
-    function getTaskCardColor(status: string) {
-        if(status == "A fazer") {
-            return blueVariant
-        }
+function getTaskCardColor(status: string): [string, string] {
+    return statusVariants[status] ?? statusVariants["A fazer"];
+}
 
-        if(status == "Em andamento") {
-            return yellowVariant
-        }
+function getPriorityBadge(priority: string) {
+    return priorityBadgeVariants[priority] ?? priorityBadgeVariants.Baixa;
+}
 
-        if(status == "Concluído") {
-            return greenVariant
-        }
-
-        return blueVariant;
-    }
-
-    const [bgColor, sidebarColor] = getTaskCardColor(task.status)
-
-    const [checked, setChecked] = useState(false);
+export default function TaskCard({ task, onEdit, onDelete, onToggleTask }: TaskCardProps) {
+    const [bgColor, sidebarColor] = getTaskCardColor(task.status);
+    const priorityBadge = getPriorityBadge(task.priority);
+    const checked = task.isChecked || task.status === "Concluído";
 
     return (
-        <li className={`rounded-2xl flex ${bgColor} shadow-sm transition-all duration-300 hover:shadow-md ${checked ? "opacity-70" : ""}`}>
-            {/* Barra lateral */}
-            <div className={`w-1.5 rounded-l-2xl ${sidebarColor}`} />
+        <li
+            className={`flex rounded-xl shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-2xl ${bgColor} ${checked ? "opacity-70" : ""}`}
+        >
+            <div className={`w-1 shrink-0 rounded-l-xl sm:rounded-l-2xl sm:w-1.5 ${sidebarColor}`} />
 
-            <div className="flex w-full items-center justify-between gap-6 p-6">
-                <div className="flex flex-1 items-start gap-5">
-                    {/* Checkbox */}
-                    <label className="mt-1 cursor-pointer">
+            <div className="flex w-full min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 sm:p-5 md:gap-6 md:p-6">
+                <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4 md:gap-5">
+                    <label className="mt-0.5 shrink-0 cursor-pointer sm:mt-1">
                         <input
                             type="checkbox"
                             checked={checked}
-                            onChange={() => setChecked((prev) => !prev)}
+                            onChange={() => onToggleTask(task.id)}
                             className="peer sr-only"
                         />
 
-                        <div
-                            className="
-                                flex size-7 items-center justify-center
-                                rounded-md
-                                border-2 border-[#C7C9D1]
-                                transition-all duration-200
-                                hover:border-[#7C3AED]
-                                peer-checked:border-[#7C3AED]
-                                peer-checked:bg-[#7C3AED]
-                                peer-focus:ring-2 peer-focus:ring-[#7C3AED]/20
-                            "
-                        >
-                            {checked && (
-                                <FaCheck
-                                    className="
-                                        text-[18px]
-                                        text-white
-                                        peer-checked:block
-                                    "
-                                />
-                            )}
+                        <div className="flex size-6 items-center justify-center rounded-md border-2 border-[#C7C9D1] transition-all duration-200 hover:border-[#7C3AED] peer-checked:border-[#7C3AED] peer-checked:bg-[#7C3AED] peer-focus:ring-2 peer-focus:ring-[#7C3AED]/20 sm:size-7">
+                            {checked && <FaCheck className="text-base text-white sm:text-[18px]" />}
                         </div>
                     </label>
 
-                    {/* Conteúdo */}
-                    <div className="flex flex-col">
+                    <div className="min-w-0 flex-1">
                         <h3
-                            className={`text-xl font-bold transition-all ${
-                                checked
-                                    ? "text-[#98A2B3] line-through"
-                                    : "text-[#667085]"
+                            className={`text-base font-bold transition-all sm:text-lg md:text-xl ${
+                                checked ? "text-[#98A2B3] line-through" : "text-[#667085]"
                             }`}
                         >
                             {task.title}
                         </h3>
 
                         <p
-                            className={`mt-2 text-base font-medium transition-all ${
-                                checked
-                                    ? "text-[#98A2B3] line-through"
-                                    : "text-[#6B7280]"
+                            className={`mt-1.5 text-sm font-medium transition-all sm:mt-2 sm:text-base ${
+                                checked ? "text-[#98A2B3] line-through" : "text-[#6B7280]"
                             }`}
                         >
                             {task.description}
                         </p>
 
-                        {/* Badges */}
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5">
-                                <span className="size-2 rounded-full bg-blue-500" />
-                                <span className="text-base font-medium text-blue-700">
+                        <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3 md:mt-5">
+                            <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 sm:gap-2 sm:px-3 sm:py-1.5">
+                                <span className="size-1.5 rounded-full bg-blue-500 sm:size-2" />
+                                <span className="text-xs font-medium text-blue-700 sm:text-sm md:text-base">
                                     {task.status}
                                 </span>
                             </div>
 
-                            <div className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-3 py-1.5">
-                                <span className="size-2 rounded-full bg-red-500" />
-                                <span className="text-base font-medium text-red-700">
+                            <div
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 sm:gap-2 sm:px-3 sm:py-1.5 ${priorityBadge.container}`}
+                            >
+                                <span className={`size-1.5 rounded-full sm:size-2 ${priorityBadge.dot}`} />
+                                <span className={`text-xs font-medium sm:text-sm md:text-base ${priorityBadge.text}`}>
                                     {task.priority}
                                 </span>
                             </div>
@@ -114,33 +104,42 @@ export default function TaskCard({task}: TaskCardProps) {
                     </div>
                 </div>
 
-                <div className="flex gap-8">
-                    {/* Data */}
+                <div className="flex items-center justify-between gap-3 border-t border-[#E5E7EB]/60 pt-3 sm:justify-end sm:gap-5 sm:border-t-0 sm:pt-0 md:gap-8">
+                    <div className="flex items-center gap-2 text-[#6B7280] md:hidden">
+                        <FaRegCalendarAlt className="size-4 shrink-0" />
+                        <span className="text-sm font-bold">{task.createdAt}</span>
+                    </div>
+
                     <div className="hidden items-center gap-2 text-[#6B7280] md:flex">
-                        <FaRegCalendarAlt size={26} fontWeight={600} />
+                        <FaRegCalendarAlt className="size-5 shrink-0" />
                         <span className="text-base font-bold">{task.createdAt}</span>
                     </div>
 
-                    {/*Editar e excluir  */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <button
                             type="button"
                             title="Editar"
-                            className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#7C3AED] shadow-sm transition-all duration-200 hover:border-[#DDD6FE] hover:bg-[#F5F3FF] hover:shadow"
+                            aria-label={`Editar tarefa ${task.title}`}
+                            onClick={onEdit}
+                            className="flex size-9 cursor-pointer items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#7C3AED] shadow-sm transition-all duration-200 hover:border-[#DDD6FE] hover:bg-[#F5F3FF] hover:shadow sm:size-10 md:size-11 md:rounded-xl"
                         >
-                            <LuPencil size={18} strokeWidth={2.2} />
+                            <LuPencil size={16} strokeWidth={2.2} className="sm:hidden" />
+                            <LuPencil size={18} strokeWidth={2.2} className="hidden sm:block" />
                         </button>
 
                         <button
                             type="button"
                             title="Excluir"
-                            className="flex size-11 cursor-pointer items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#EF4444] shadow-sm transition-all duration-200 hover:border-[#FECACA] hover:bg-[#FEF2F2] hover:shadow"
+                            aria-label={`Excluir tarefa ${task.title}`}
+                            onClick={() => onDelete(task.id)}
+                            className="flex size-9 cursor-pointer items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#EF4444] shadow-sm transition-all duration-200 hover:border-[#FECACA] hover:bg-[#FEF2F2] hover:shadow sm:size-10 md:size-11 md:rounded-xl"
                         >
-                            <LuTrash2 size={18} strokeWidth={2.2} />
+                            <LuTrash2 size={16} strokeWidth={2.2} className="sm:hidden" />
+                            <LuTrash2 size={18} strokeWidth={2.2} className="hidden sm:block" />
                         </button>
                     </div>
                 </div>
             </div>
         </li>
-    )
+    );
 }

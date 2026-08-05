@@ -1,8 +1,10 @@
-import { useState, type ChangeEvent, type SubmitEvent} from "react";
-import type { TaskFormData, TaskFormErrors } from "../types/task";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import type { Task, TaskFormData, TaskFormErrors } from "../types/task";
+import { taskToFormData } from "../utils/taskMappers";
 
 type UseTaskFormProps = {
-    onSuccess: () => void;
+    taskToEdit?: Task | null;
+    onSuccess: (formData: TaskFormData) => void;
 };
 
 const initialValues: TaskFormData = {
@@ -13,9 +15,21 @@ const initialValues: TaskFormData = {
     date: "",
 };
 
-export function useTaskForm({ onSuccess }: UseTaskFormProps) {
+export function useTaskForm({ taskToEdit, onSuccess }: UseTaskFormProps) {
     const [formData, setFormData] = useState<TaskFormData>(initialValues);
     const [errors, setErrors] = useState<TaskFormErrors>({});
+
+    const isEditing = Boolean(taskToEdit);
+
+    useEffect(() => {
+        if (taskToEdit) {
+            setFormData(taskToFormData(taskToEdit));
+        } else {
+            setFormData(initialValues);
+        }
+
+        setErrors({});
+    }, [taskToEdit]);
 
     function validate() {
         const newErrors: TaskFormErrors = {};
@@ -62,21 +76,18 @@ export function useTaskForm({ onSuccess }: UseTaskFormProps) {
         updateField(name as keyof TaskFormData, value);
     }
 
-    function handleSubmit(event: SubmitEvent) {
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (!validate()) return;
 
-        onSuccess();
-
-        setFormData(initialValues);
-        setErrors({});
+        onSuccess(formData);
     }
 
     return {
         formData,
         errors,
-
+        isEditing,
         updateField,
         handleInputChange,
         handleSubmit,
