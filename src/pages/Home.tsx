@@ -24,6 +24,12 @@ export default function Home() {
         setIsFormOpen(true);
     };
 
+    const handleDeleteTask = (id: number) => {
+        setTasks((prevTasks) =>
+            prevTasks.filter((task) => task.id !== id)
+        );
+    };
+
     const closeForm = () => {
         setIsFormOpen(false);
         setTaskToEdit(null);
@@ -47,6 +53,22 @@ export default function Home() {
         closeForm();
     };
 
+    const handleToggleTask = (id: number) => {
+        setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+                task.id === id
+                    ? {
+                          ...task,
+                          status: task.status === "Concluído"
+                              ? "A fazer"
+                              : "Concluído",
+                          isChecked: task.status !== "Concluído",
+                      }
+                    : task
+            )
+        );
+    };
+
     const hasTasks = tasks.length > 0;
 
     return (
@@ -60,7 +82,12 @@ export default function Home() {
                         <EmptyTaskList onAddTask={openCreateForm} />
                     </>
                 ) : (
-                    <TaskCardList tasks={tasks} onEditTask={openEditForm} />
+                    <TaskCardList 
+                        tasks={tasks} 
+                        onEditTask={openEditForm} 
+                        onDeleteTask={handleDeleteTask} 
+                        onToggleTask={handleToggleTask}
+                    />
                 )}
             </main>
 

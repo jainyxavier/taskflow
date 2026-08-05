@@ -7,6 +7,8 @@ import { groupTasksByStatus } from "../utils/groupTasksByStatus";
 type TaskCardListProps = {
     tasks: Task[];
     onEditTask: (task: Task) => void;
+    onDeleteTask: (id: number) => void;
+    onToggleTask: (id: number) => void;
 };
 
 const statusSections = [
@@ -33,7 +35,7 @@ const statusSections = [
     },
 ] as const;
 
-export default function TaskCardList({ tasks, onEditTask }: TaskCardListProps) {
+export default function TaskCardList({ tasks, onEditTask, onDeleteTask, onToggleTask }: TaskCardListProps) {
     const tasksByStatus = useMemo(() => groupTasksByStatus(tasks), [tasks]);
 
     return (
@@ -92,6 +94,8 @@ export default function TaskCardList({ tasks, onEditTask }: TaskCardListProps) {
                                             key={task.id}
                                             task={task}
                                             onEdit={() => onEditTask(task)}
+                                            onDelete={() => onDeleteTask(task.id)}
+                                            onToggleTask={() => onToggleTask(task.id)}
                                         />
                                     ))}
                                 </ol>

@@ -1,11 +1,12 @@
 import { FaCheck, FaRegCalendarAlt } from "react-icons/fa";
 import type { Task } from "../types/task";
 import { LuPencil, LuTrash2 } from "react-icons/lu";
-import { useState } from "react";
 
 interface TaskCardProps {
     task: Task;
     onEdit: () => void;
+    onDelete: (id: number) => void;
+    onToggleTask: (id: number) => void;
 }
 
 const statusVariants: Record<string, [string, string]> = {
@@ -40,10 +41,10 @@ function getPriorityBadge(priority: string) {
     return priorityBadgeVariants[priority] ?? priorityBadgeVariants.Baixa;
 }
 
-export default function TaskCard({ task, onEdit }: TaskCardProps) {
+export default function TaskCard({ task, onEdit, onDelete, onToggleTask }: TaskCardProps) {
     const [bgColor, sidebarColor] = getTaskCardColor(task.status);
     const priorityBadge = getPriorityBadge(task.priority);
-    const [checked, setChecked] = useState(task.isChecked || task.status === "Concluído");
+    const checked = task.isChecked || task.status === "Concluído";
 
     return (
         <li
@@ -57,7 +58,7 @@ export default function TaskCard({ task, onEdit }: TaskCardProps) {
                         <input
                             type="checkbox"
                             checked={checked}
-                            onChange={() => setChecked((prev) => !prev)}
+                            onChange={() => onToggleTask(task.id)}
                             className="peer sr-only"
                         />
 
@@ -130,6 +131,7 @@ export default function TaskCard({ task, onEdit }: TaskCardProps) {
                             type="button"
                             title="Excluir"
                             aria-label={`Excluir tarefa ${task.title}`}
+                            onClick={() => onDelete(task.id)}
                             className="flex size-9 cursor-pointer items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#EF4444] shadow-sm transition-all duration-200 hover:border-[#FECACA] hover:bg-[#FEF2F2] hover:shadow sm:size-10 md:size-11 md:rounded-xl"
                         >
                             <LuTrash2 size={16} strokeWidth={2.2} className="sm:hidden" />
