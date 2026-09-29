@@ -72,7 +72,7 @@ export default function Home() {
     const hasTasks = tasks.length > 0;
 
     return (
-        <div className="flex min-h-dvh w-full flex-col bg-[#F3F1FF]">
+        <div className="auth-enter flex min-h-dvh w-full flex-col bg-[#F3F1FF]">
             <Header onAddTask={openCreateForm} />
 
             <main className="mx-auto flex w-full max-w-325 flex-1 flex-col px-4 pb-8 sm:px-6 lg:px-8">
