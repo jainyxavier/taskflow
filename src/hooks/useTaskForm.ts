@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type SubmitEvent } from "react";
 import type { Task, TaskFormData, TaskFormErrors } from "../types/task";
 import { taskToFormData } from "../utils/taskMappers";
 
@@ -76,7 +76,7 @@ export function useTaskForm({ taskToEdit, onSuccess }: UseTaskFormProps) {
         updateField(name as keyof TaskFormData, value);
     }
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (!validate()) return;
