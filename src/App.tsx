@@ -15,6 +15,7 @@ export default function App() {
               </Route>
               <Route element={<ProtectedRoute />}>
                 <Route path="/" element={<Home />} />
+                <Route path="/projects" element={<Home />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

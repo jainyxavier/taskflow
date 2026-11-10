@@ -1,54 +1,81 @@
 import { useState, type SubmitEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HiOutlineLockClosed, HiOutlineMail, HiOutlineUser } from "react-icons/hi";
 import { IoPersonAddOutline } from "react-icons/io5";
 import { LuEye, LuEyeOff } from "react-icons/lu";
 import AuthLayout from "../components/AuthLayout";
 import AuthTransitionOverlay from "../components/AuthTransitionOverlay";
+import FieldError from "../components/FieldError";
 import { useAuthTransition } from "../hooks/useAuthTransition";
-import { getPostLoginPath, markSessionTrusted, register } from "../utils/auth";
+import {
+    AuthRequestError,
+    POST_REGISTER_PATH,
+    markSessionTrusted,
+    register,
+    type AuthFieldErrors,
+} from "../utils/auth";
 
-type LocationState = {
-    from?: string;
-};
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const inputClassName =
-    "h-14 w-full rounded-xl border border-[#E5E7EB] bg-white pr-4 pl-12 text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
+function isValidEmail(email: string) {
+    return EMAIL_PATTERN.test(email);
+}
 
-const passwordInputClassName =
-    "h-14 w-full rounded-xl border border-[#E5E7EB] bg-white pr-12 pl-12 text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20";
+function inputClassName(hasError: boolean, withPasswordToggle = false) {
+    const padding = withPasswordToggle ? "pr-12 pl-12" : "pr-4 pl-12";
+    const border = hasError
+        ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+        : "border-[#E5E7EB] focus:border-[#7C3AED] focus:ring-[#7C3AED]/20";
+
+    return `h-14 w-full rounded-xl border bg-white ${padding} text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:ring-2 ${border}`;
+}
 
 export default function Register() {
     const navigate = useNavigate();
-    const location = useLocation();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { isTransitioning, startTransition } = useAuthTransition();
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         setError("");
+        setFieldErrors({});
 
         const formData = new FormData(event.currentTarget);
         const name = String(formData.get("name") ?? "").trim();
         const email = String(formData.get("email") ?? "").trim();
         const password = String(formData.get("password") ?? "");
         const confirmPassword = String(formData.get("confirmPassword") ?? "");
+        const nextFieldErrors: AuthFieldErrors = {};
 
-        if (name.length < 2) {
-            setError("O nome deve ter pelo menos 2 caracteres.");
-            return;
+        if (!name) {
+            nextFieldErrors.name = "Nome é obrigatório";
+        } else if (name.length < 2) {
+            nextFieldErrors.name = "O nome deve ter pelo menos 2 caracteres.";
+        }
+
+        if (!isValidEmail(email)) {
+            nextFieldErrors.email = "Email inválido";
         }
 
         if (password.length < 8) {
-            setError("A senha deve ter pelo menos 8 caracteres.");
-            return;
+            nextFieldErrors.password = "Mínimo 8 caracteres";
         }
 
-        if (password !== confirmPassword) {
-            setError("As senhas não coincidem.");
+        if (!confirmPassword || password !== confirmPassword) {
+            nextFieldErrors.confirmPassword = "Senhas não coincidem";
+        }
+
+        if (
+            nextFieldErrors.name ||
+            nextFieldErrors.email ||
+            nextFieldErrors.password ||
+            nextFieldErrors.confirmPassword
+        ) {
+            setFieldErrors(nextFieldErrors);
             return;
         }
 
@@ -57,12 +84,20 @@ export default function Register() {
         try {
             await register(name, email, password);
             markSessionTrusted();
-            const from = (location.state as LocationState | null)?.from;
             startTransition(() => {
-                navigate(getPostLoginPath(from), { replace: true });
+                navigate(POST_REGISTER_PATH, { replace: true });
             });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Não foi possível criar a conta.");
+            if (err instanceof AuthRequestError) {
+                setFieldErrors(err.fields);
+                if (!err.fields.name && !err.fields.email && !err.fields.password) {
+                    setError(err.message);
+                }
+            } else {
+                setError(
+                    err instanceof Error ? err.message : "Não foi possível conectar ao servidor",
+                );
+            }
             setIsSubmitting(false);
         }
     }
@@ -94,10 +129,13 @@ export default function Register() {
                             required
                             minLength={2}
                             maxLength={100}
+                            aria-invalid={Boolean(fieldErrors.name)}
+                            aria-describedby={fieldErrors.name ? "name-error" : undefined}
                             placeholder="Digite seu nome"
-                            className={inputClassName}
+                            className={inputClassName(Boolean(fieldErrors.name))}
                         />
                     </div>
+                    <FieldError id="name-error" message={fieldErrors.name} />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -112,10 +150,13 @@ export default function Register() {
                             name="email"
                             type="email"
                             required
+                            aria-invalid={Boolean(fieldErrors.email)}
+                            aria-describedby={fieldErrors.email ? "email-error" : undefined}
                             placeholder="Digite seu e-mail"
-                            className={inputClassName}
+                            className={inputClassName(Boolean(fieldErrors.email))}
                         />
                     </div>
+                    <FieldError id="email-error" message={fieldErrors.email} />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -132,8 +173,10 @@ export default function Register() {
                             required
                             minLength={8}
                             maxLength={100}
+                            aria-invalid={Boolean(fieldErrors.password)}
+                            aria-describedby={fieldErrors.password ? "password-error" : undefined}
                             placeholder="Mínimo de 8 caracteres"
-                            className={passwordInputClassName}
+                            className={inputClassName(Boolean(fieldErrors.password), true)}
                         />
                         <button
                             type="button"
@@ -144,6 +187,7 @@ export default function Register() {
                             {showPassword ? <LuEyeOff className="size-5" /> : <LuEye className="size-5" />}
                         </button>
                     </div>
+                    <FieldError id="password-error" message={fieldErrors.password} />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -160,22 +204,37 @@ export default function Register() {
                             required
                             minLength={8}
                             maxLength={100}
+                            aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                            aria-describedby={
+                                fieldErrors.confirmPassword ? "confirm-password-error" : undefined
+                            }
                             placeholder="Repita sua senha"
-                            className={passwordInputClassName}
+                            className={inputClassName(Boolean(fieldErrors.confirmPassword), true)}
                         />
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword((prev) => !prev)}
-                            aria-label={showConfirmPassword ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
+                            aria-label={
+                                showConfirmPassword
+                                    ? "Ocultar confirmação de senha"
+                                    : "Mostrar confirmação de senha"
+                            }
                             className="absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer text-[#9CA3AF] hover:text-[#6B7280]"
                         >
-                            {showConfirmPassword ? <LuEyeOff className="size-5" /> : <LuEye className="size-5" />}
+                            {showConfirmPassword ? (
+                                <LuEyeOff className="size-5" />
+                            ) : (
+                                <LuEye className="size-5" />
+                            )}
                         </button>
                     </div>
+                    <FieldError id="confirm-password-error" message={fieldErrors.confirmPassword} />
                 </div>
 
                 {error && (
-                    <p className="text-sm font-medium text-red-500">{error}</p>
+                    <p className="text-sm font-medium text-red-500" role="alert">
+                        {error}
+                    </p>
                 )}
 
                 <button
