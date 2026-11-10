@@ -92,8 +92,10 @@ const LOGIN_EMAIL_INVALID = "Informe um e-mail válido.";
 const LOGIN_PASSWORD_EMPTY = "A senha não pode estar vazia.";
 
 export type AuthFieldErrors = {
+    name?: string;
     email?: string;
     password?: string;
+    confirmPassword?: string;
 };
 
 export class AuthRequestError extends Error {
@@ -158,6 +160,38 @@ function mapLoginFieldErrors(messages: string[]): AuthFieldErrors {
     return fields;
 }
 
+const REGISTER_EMAIL_IN_USE = "Este email já está em uso";
+const REGISTER_EMAIL_INVALID = "Email inválido";
+const REGISTER_PASSWORD_MIN = "Mínimo 8 caracteres";
+const REGISTER_NAME_REQUIRED = "Nome é obrigatório";
+
+function mapRegisterFieldErrors(messages: string[]): AuthFieldErrors {
+    const fields: AuthFieldErrors = {};
+
+    for (const raw of messages) {
+        const message = raw.toLowerCase();
+
+        if (message.includes("email")) {
+            fields.email = REGISTER_EMAIL_INVALID;
+            continue;
+        }
+
+        if (message.startsWith("name") || message.includes("name must")) {
+            fields.name =
+                message.includes("longer") || message.includes("min") || message.includes("2")
+                    ? "O nome deve ter pelo menos 2 caracteres."
+                    : REGISTER_NAME_REQUIRED;
+            continue;
+        }
+
+        if (message.includes("password")) {
+            fields.password = REGISTER_PASSWORD_MIN;
+        }
+    }
+
+    return fields;
+}
+
 export function isLoggedIn(): boolean {
     return Boolean(getAccessToken());
 }
@@ -173,6 +207,8 @@ export function getPostLoginPath(from?: string | null): string {
 
     return from;
 }
+
+export const POST_REGISTER_PATH = "/projects";
 
 function decodeJwtPayload(token: string): { exp?: number } | null {
     try {
@@ -355,23 +391,43 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(name: string, email: string, password: string) {
-    const response = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-    });
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({ name, email, password }),
+        });
 
-    if (response.status === 409) {
-        throw new Error("Este e-mail já está cadastrado.");
+        if (response.status === 409) {
+            throw new AuthRequestError(REGISTER_EMAIL_IN_USE, { email: REGISTER_EMAIL_IN_USE });
+        }
+
+        if (response.status === 400) {
+            const payload = await readErrorPayload(response);
+            const messages = extractValidationMessages(payload);
+            const fields = mapRegisterFieldErrors(messages);
+            const message =
+                fields.name ??
+                fields.email ??
+                fields.password ??
+                (messages.join(", ") || "Verifique os dados informados.");
+            throw new AuthRequestError(message, fields);
+        }
+
+        if (!response.ok) {
+            throw new AuthRequestError(LOGIN_NETWORK_ERROR);
+        }
+
+        const data = (await response.json()) as AuthResponse;
+        persistAuthResponse(data, "Não foi possível criar a conta. Tente novamente.");
+    } catch (error) {
+        if (error instanceof AuthRequestError) throw error;
+        if (isNetworkError(error)) {
+            throw new AuthRequestError(LOGIN_NETWORK_ERROR);
+        }
+        throw error;
     }
-
-    if (!response.ok) {
-        throw new Error("Não foi possível criar a conta. Verifique os dados e tente novamente.");
-    }
-
-    const data = (await response.json()) as AuthResponse;
-    persistAuthResponse(data, "Não foi possível criar a conta. Tente novamente.");
 }
