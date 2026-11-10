@@ -4,14 +4,25 @@ import { LuClipboardCheck } from "react-icons/lu";
 import AddTaskBtn from "./AddTaskBtn";
 import AuthTransitionOverlay from "./AuthTransitionOverlay";
 import { useAuthTransition } from "../hooks/useAuthTransition";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 import { logout } from "../utils/auth";
 
 type HeaderProps = {
     onAddTask: () => void;
 };
 
+function getInitials(name: string) {
+    return name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("");
+}
+
 export default function Header({ onAddTask }: HeaderProps) {
     const navigate = useNavigate();
+    const user = useCurrentUser();
     const { isTransitioning, startTransition } = useAuthTransition();
 
     function handleLogout() {
@@ -37,6 +48,26 @@ export default function Header({ onAddTask }: HeaderProps) {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
+                    {user && (
+                        <div
+                            aria-label={`Olá, ${user.name}`}
+                            className="mr-1 flex min-w-0 items-center gap-2 sm:mr-2"
+                        >
+                            <span
+                                aria-hidden="true"
+                                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-xs font-bold text-[#7C3AED] sm:size-9 sm:text-sm"
+                            >
+                                {getInitials(user.name) || user.name[0]?.toUpperCase()}
+                            </span>
+                            <p className="hidden min-w-0 flex-col leading-tight sm:flex">
+                                <span className="text-xs font-medium text-[#6B7280]">Olá,</span>
+                                <span className="max-w-40 truncate text-sm font-semibold text-[#111827] lg:max-w-56">
+                                    {user.name}
+                                </span>
+                            </p>
+                        </div>
+                    )}
+
                     <AddTaskBtn buttonText="Nova Tarefa" onClick={onAddTask} />
 
                     <button

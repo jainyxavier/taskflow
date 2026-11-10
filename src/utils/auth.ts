@@ -13,9 +13,48 @@ export function getRefreshToken(): string | null {
     return localStorage.getItem("refreshToken");
 }
 
+export type AuthUser = {
+    id?: string;
+    name: string;
+    email?: string;
+};
+
+const CURRENT_USER_KEY = "currentUser";
+
+export function saveCurrentUser(user: AuthUser) {
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+}
+
+export function getCurrentUser(): AuthUser | null {
+    const raw = localStorage.getItem(CURRENT_USER_KEY);
+    if (!raw) return null;
+
+    try {
+        const user = JSON.parse(raw) as AuthUser;
+        if (typeof user?.name !== "string" || !user.name.trim()) return null;
+        return { ...user, name: user.name.trim() };
+    } catch {
+        return null;
+    }
+}
+
+function persistUserFromPayload(payload: unknown) {
+    if (!payload || typeof payload !== "object") return;
+
+    const data = payload as { id?: string; name?: string; email?: string };
+    if (typeof data.name !== "string" || !data.name.trim()) return;
+
+    saveCurrentUser({
+        id: data.id,
+        name: data.name.trim(),
+        email: data.email,
+    });
+}
+
 export function clearTokens() {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem(CURRENT_USER_KEY);
 }
 
 export function logout() {
@@ -44,7 +83,80 @@ type AuthResponse = {
     refreshToken?: string;
     access_token?: string;
     refresh_token?: string;
+    user?: AuthUser;
 };
+
+const LOGIN_INVALID_CREDENTIALS = "Email ou senha inválidos";
+const LOGIN_NETWORK_ERROR = "Não foi possível conectar ao servidor";
+const LOGIN_EMAIL_INVALID = "Informe um e-mail válido.";
+const LOGIN_PASSWORD_EMPTY = "A senha não pode estar vazia.";
+
+export type AuthFieldErrors = {
+    email?: string;
+    password?: string;
+};
+
+export class AuthRequestError extends Error {
+    readonly fields: AuthFieldErrors;
+
+    constructor(message: string, fields: AuthFieldErrors = {}) {
+        super(message);
+        this.name = "AuthRequestError";
+        this.fields = fields;
+    }
+}
+
+function isNetworkError(error: unknown) {
+    if (error instanceof TypeError) return true;
+    if (error instanceof DOMException && error.name === "AbortError") return true;
+
+    return (
+        error instanceof Error &&
+        /failed to fetch|networkerror|load failed|network request failed/i.test(error.message)
+    );
+}
+
+async function readErrorPayload(response: Response): Promise<unknown> {
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+}
+
+function extractValidationMessages(payload: unknown): string[] {
+    if (!payload || typeof payload !== "object") return [];
+
+    const message = (payload as { message?: unknown }).message;
+    if (typeof message === "string") return [message];
+    if (Array.isArray(message)) {
+        return message.filter((item): item is string => typeof item === "string");
+    }
+
+    return [];
+}
+
+function mapLoginFieldErrors(messages: string[]): AuthFieldErrors {
+    const fields: AuthFieldErrors = {};
+
+    for (const raw of messages) {
+        const message = raw.toLowerCase();
+
+        if (message.includes("email")) {
+            fields.email = LOGIN_EMAIL_INVALID;
+            continue;
+        }
+
+        if (message.includes("password")) {
+            fields.password =
+                message.includes("longer") || message.includes("min") || message.includes("6")
+                    ? "A senha deve ter pelo menos 6 caracteres."
+                    : LOGIN_PASSWORD_EMPTY;
+        }
+    }
+
+    return fields;
+}
 
 export function isLoggedIn(): boolean {
     return Boolean(getAccessToken());
@@ -137,6 +249,7 @@ export async function validateSession(): Promise<boolean> {
         const response = await fetchCurrentUser(accessToken);
 
         if (response.ok) {
+            persistUserFromPayload(await response.json());
             return true;
         }
 
@@ -148,7 +261,10 @@ export async function validateSession(): Promise<boolean> {
             }
 
             const retry = await fetchCurrentUser(renewed);
-            if (retry.ok) return true;
+            if (retry.ok) {
+                persistUserFromPayload(await retry.json());
+                return true;
+            }
 
             clearTokens();
             return false;
@@ -169,24 +285,73 @@ function persistAuthResponse(data: AuthResponse, fallbackMessage: string) {
     }
 
     saveTokens(accessToken, refreshToken);
+    persistUserFromPayload(data.user);
+}
+
+export async function getCurrentUserProfile(): Promise<AuthUser | null> {
+    const cached = getCurrentUser();
+    if (cached) return cached;
+
+    try {
+        let accessToken = getAccessToken();
+        if (!accessToken || isAccessTokenExpired(accessToken)) {
+            accessToken = await refreshAccessToken();
+        }
+        if (!accessToken) return null;
+
+        let response = await fetchCurrentUser(accessToken);
+        if (response.status === 401) {
+            accessToken = await refreshAccessToken();
+            if (!accessToken) {
+                clearTokens();
+                return null;
+            }
+            response = await fetchCurrentUser(accessToken);
+        }
+
+        if (!response.ok) return null;
+        persistUserFromPayload(await response.json());
+        return getCurrentUser();
+    } catch {
+        return null;
+    }
 }
 
 export async function login(email: string, password: string) {
-    const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-    });
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+        });
 
-    if (!response.ok) {
-        throw new Error("E-mail ou senha inválidos.");
+        if (response.status === 401) {
+            throw new AuthRequestError(LOGIN_INVALID_CREDENTIALS);
+        }
+
+        if (response.status === 400) {
+            const payload = await readErrorPayload(response);
+            const fields = mapLoginFieldErrors(extractValidationMessages(payload));
+            const message = fields.email ?? fields.password ?? "Verifique os dados informados.";
+            throw new AuthRequestError(message, fields);
+        }
+
+        if (!response.ok) {
+            throw new AuthRequestError(LOGIN_NETWORK_ERROR);
+        }
+
+        const data = (await response.json()) as AuthResponse;
+        persistAuthResponse(data, "Não foi possível entrar. Tente novamente.");
+    } catch (error) {
+        if (error instanceof AuthRequestError) throw error;
+        if (isNetworkError(error)) {
+            throw new AuthRequestError(LOGIN_NETWORK_ERROR);
+        }
+        throw error;
     }
-
-    const data = (await response.json()) as AuthResponse;
-    persistAuthResponse(data, "Não foi possível entrar. Tente novamente.");
 }
 
 export async function register(name: string, email: string, password: string) {
