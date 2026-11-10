@@ -5,29 +5,68 @@ import { IoIosLogIn } from "react-icons/io";
 import { LuEye, LuEyeOff } from "react-icons/lu";
 import AuthLayout from "../components/AuthLayout";
 import AuthTransitionOverlay from "../components/AuthTransitionOverlay";
+import FieldError from "../components/FieldError";
 import { useAuthTransition } from "../hooks/useAuthTransition";
-import { getPostLoginPath, login, markSessionTrusted } from "../utils/auth";
+import {
+    AuthRequestError,
+    getPostLoginPath,
+    login,
+    markSessionTrusted,
+    type AuthFieldErrors,
+} from "../utils/auth";
 
 type LocationState = {
     from?: string;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(email: string) {
+    return EMAIL_PATTERN.test(email);
+}
+
+function inputClassName(hasError: boolean, withPasswordToggle = false) {
+    const padding = withPasswordToggle ? "pr-12 pl-12" : "pr-4 pl-12";
+    const border = hasError
+        ? "border-red-400 focus:border-red-400 focus:ring-red-200"
+        : "border-[#E5E7EB] focus:border-[#7C3AED] focus:ring-[#7C3AED]/20";
+
+    return `h-14 w-full rounded-xl border bg-white ${padding} text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:ring-2 ${border}`;
+}
 
 export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { isTransitioning, startTransition } = useAuthTransition();
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         setError("");
-        setIsSubmitting(true);
+        setFieldErrors({});
 
         const formData = new FormData(event.currentTarget);
         const email = String(formData.get("email") ?? "").trim();
         const password = String(formData.get("password") ?? "");
+        const nextFieldErrors: AuthFieldErrors = {};
+
+        if (!isValidEmail(email)) {
+            nextFieldErrors.email = "Informe um e-mail válido.";
+        }
+
+        if (!password) {
+            nextFieldErrors.password = "A senha não pode estar vazia.";
+        }
+
+        if (nextFieldErrors.email || nextFieldErrors.password) {
+            setFieldErrors(nextFieldErrors);
+            return;
+        }
+
+        setIsSubmitting(true);
 
         try {
             await login(email, password);
@@ -37,7 +76,16 @@ export default function Login() {
                 navigate(getPostLoginPath(from), { replace: true });
             });
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Não foi possível entrar.");
+            if (err instanceof AuthRequestError) {
+                setFieldErrors(err.fields);
+                if (!err.fields.email && !err.fields.password) {
+                    setError(err.message);
+                }
+            } else {
+                setError(
+                    err instanceof Error ? err.message : "Não foi possível conectar ao servidor",
+                );
+            }
             setIsSubmitting(false);
         }
     }
@@ -67,10 +115,13 @@ export default function Login() {
                             name="email"
                             type="email"
                             required
+                            aria-invalid={Boolean(fieldErrors.email)}
+                            aria-describedby={fieldErrors.email ? "email-error" : undefined}
                             placeholder="Digite seu e-mail"
-                            className="h-14 w-full rounded-xl border border-[#E5E7EB] bg-white pr-4 pl-12 text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
+                            className={inputClassName(Boolean(fieldErrors.email))}
                         />
                     </div>
+                    <FieldError id="email-error" message={fieldErrors.email} />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -85,8 +136,10 @@ export default function Login() {
                             type={showPassword ? "text" : "password"}
                             autoComplete="current-password"
                             required
+                            aria-invalid={Boolean(fieldErrors.password)}
+                            aria-describedby={fieldErrors.password ? "password-error" : undefined}
                             placeholder="Digite sua senha"
-                            className="h-14 w-full rounded-xl border border-[#E5E7EB] bg-white pr-12 pl-12 text-base text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#7C3AED] focus:ring-2 focus:ring-[#7C3AED]/20"
+                            className={inputClassName(Boolean(fieldErrors.password), true)}
                         />
                         <button
                             type="button"
@@ -97,10 +150,13 @@ export default function Login() {
                             {showPassword ? <LuEyeOff className="size-5" /> : <LuEye className="size-5" />}
                         </button>
                     </div>
+                    <FieldError id="password-error" message={fieldErrors.password} />
                 </div>
 
                 {error && (
-                    <p className="text-sm font-medium text-red-500">{error}</p>
+                    <p className="text-sm font-medium text-red-500" role="alert">
+                        {error}
+                    </p>
                 )}
 
                 <button
