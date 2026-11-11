@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { consumeTrustedSession, hasStoredSession, validateSession } from "../utils/auth";
+import { useEffect } from "react";
+import { useAuthStore } from "../stores/authStore";
+import { hasStoredSession } from "../utils/auth";
 
 export type AuthStatus = "checking" | "authenticated" | "unauthenticated";
 
@@ -8,36 +9,22 @@ type UseAuthSessionOptions = {
 };
 
 export function useAuthSession(options?: UseAuthSessionOptions) {
-    const [status, setStatus] = useState<AuthStatus>(() => {
-        if (options?.acceptTrusted && consumeTrustedSession()) {
-            return "authenticated";
-        }
-
-        return hasStoredSession() ? "checking" : "unauthenticated";
-    });
+    const isLoading = useAuthStore((state) => state.isLoading);
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const didBootstrap = useAuthStore((state) => state.didBootstrap);
+    const acceptTrusted = options?.acceptTrusted;
 
     useEffect(() => {
-        if (status === "authenticated") {
-            return;
-        }
+        void useAuthStore.getState().bootstrapSession({ acceptTrusted });
+    }, [acceptTrusted]);
 
-        if (!hasStoredSession()) {
-            setStatus("unauthenticated");
-            return;
-        }
+    if (isAuthenticated) {
+        return "authenticated";
+    }
 
-        let cancelled = false;
+    if (isLoading || (!didBootstrap && hasStoredSession())) {
+        return "checking";
+    }
 
-        validateSession().then((valid) => {
-            if (!cancelled) {
-                setStatus(valid ? "authenticated" : "unauthenticated");
-            }
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    return status;
+    return "unauthenticated";
 }
