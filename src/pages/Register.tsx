@@ -7,6 +7,7 @@ import AuthLayout from "../components/AuthLayout";
 import AuthTransitionOverlay from "../components/AuthTransitionOverlay";
 import FieldError from "../components/FieldError";
 import { useAuthTransition } from "../hooks/useAuthTransition";
+import { useAuthStore } from "../stores/authStore";
 import {
     AuthRequestError,
     POST_REGISTER_PATH,
@@ -83,6 +84,7 @@ export default function Register() {
 
         try {
             await register(name, email, password);
+            useAuthStore.getState().acceptTrustedSession();
             markSessionTrusted();
             startTransition(() => {
                 navigate(POST_REGISTER_PATH, { replace: true });

@@ -7,6 +7,7 @@ import AuthLayout from "../components/AuthLayout";
 import AuthTransitionOverlay from "../components/AuthTransitionOverlay";
 import FieldError from "../components/FieldError";
 import { useAuthTransition } from "../hooks/useAuthTransition";
+import { useAuthStore } from "../stores/authStore";
 import {
     AuthRequestError,
     getPostLoginPath,
@@ -70,6 +71,7 @@ export default function Login() {
 
         try {
             await login(email, password);
+            useAuthStore.getState().acceptTrustedSession();
             markSessionTrusted();
             const from = (location.state as LocationState | null)?.from;
             startTransition(() => {

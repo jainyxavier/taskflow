@@ -38,7 +38,7 @@ export function getCurrentUser(): AuthUser | null {
     }
 }
 
-function persistUserFromPayload(payload: unknown) {
+export function persistUserFromPayload(payload: unknown) {
     if (!payload || typeof payload !== "object") return;
 
     const data = payload as { id?: string; name?: string; email?: string };
@@ -201,8 +201,8 @@ export function hasStoredSession(): boolean {
 }
 
 export function getPostLoginPath(from?: string | null): string {
-    if (!from || from === "/login" || from === "/cadastro") {
-        return "/";
+    if (!from || from === "/login" || from === "/cadastro" || from === "/register" || from === "/") {
+        return "/projects";
     }
 
     return from;

@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import EmptyTaskList from "../components/EmptyTaskList";
-import Header from "../components/Header";
 import Modal from "../components/Modal";
 import FormTask from "../components/FormTask";
 import TaskCardList from "../components/TaskCardList";
+import { useRegisterAddTask } from "../hooks/useAddTaskAction";
 import type { Task, TaskFormData } from "../types/task";
 import { formDataToTask } from "../utils/taskMappers";
 import { initialTasks } from "../constants/taskList.contants";
@@ -14,10 +14,12 @@ export default function Home() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
-    const openCreateForm = () => {
+    const openCreateForm = useCallback(() => {
         setTaskToEdit(null);
         setIsFormOpen(true);
-    };
+    }, []);
+
+    useRegisterAddTask(openCreateForm);
 
     const openEditForm = (task: Task) => {
         setTaskToEdit(task);
@@ -72,24 +74,20 @@ export default function Home() {
     const hasTasks = tasks.length > 0;
 
     return (
-        <div className="auth-enter flex min-h-dvh w-full flex-col bg-[#F3F1FF]">
-            <Header onAddTask={openCreateForm} />
-
-            <main className="mx-auto flex w-full max-w-325 flex-1 flex-col px-4 pb-8 sm:px-6 lg:px-8">
-                {!hasTasks ? (
-                    <>
-                        <PageHeader />
-                        <EmptyTaskList onAddTask={openCreateForm} />
-                    </>
-                ) : (
-                    <TaskCardList 
-                        tasks={tasks} 
-                        onEditTask={openEditForm} 
-                        onDeleteTask={handleDeleteTask} 
-                        onToggleTask={handleToggleTask}
-                    />
-                )}
-            </main>
+        <div className="flex w-full flex-1 flex-col">
+            {!hasTasks ? (
+                <>
+                    <PageHeader />
+                    <EmptyTaskList onAddTask={openCreateForm} />
+                </>
+            ) : (
+                <TaskCardList
+                    tasks={tasks}
+                    onEditTask={openEditForm}
+                    onDeleteTask={handleDeleteTask}
+                    onToggleTask={handleToggleTask}
+                />
+            )}
 
             <Modal isOpen={isFormOpen} onClose={closeForm}>
                 <FormTask

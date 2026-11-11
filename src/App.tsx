@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import AppShell from "./components/layout/AppShell";
 
 export default function App() {
     return (
@@ -12,12 +13,15 @@ export default function App() {
               <Route element={<GuestRoute />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Register />} />
+                <Route path="/register" element={<Register />} />
               </Route>
               <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/projects" element={<Home />} />
+                <Route element={<AppShell />}>
+                  <Route path="/" element={<Navigate to="/projects" replace />} />
+                  <Route path="/projects" element={<Home />} />
+                </Route>
               </Route>
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/projects" replace />} />
             </Routes>
         </BrowserRouter>
     );

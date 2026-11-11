@@ -3,13 +3,10 @@ import { IoIosLogOut } from "react-icons/io";
 import { LuClipboardCheck } from "react-icons/lu";
 import AddTaskBtn from "./AddTaskBtn";
 import AuthTransitionOverlay from "./AuthTransitionOverlay";
+import { useAddTaskButton } from "../hooks/useAddTaskAction";
 import { useAuthTransition } from "../hooks/useAuthTransition";
-import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useAuthStore } from "../stores/authStore";
 import { logout } from "../utils/auth";
-
-type HeaderProps = {
-    onAddTask: () => void;
-};
 
 function getInitials(name: string) {
     return name
@@ -20,14 +17,17 @@ function getInitials(name: string) {
         .join("");
 }
 
-export default function Header({ onAddTask }: HeaderProps) {
+export default function Header() {
     const navigate = useNavigate();
-    const user = useCurrentUser();
+    const user = useAuthStore((state) => state.user);
+    const hydrateFromStorage = useAuthStore((state) => state.hydrateFromStorage);
+    const onAddTask = useAddTaskButton();
     const { isTransitioning, startTransition } = useAuthTransition();
 
     function handleLogout() {
         startTransition(() => {
             logout();
+            hydrateFromStorage();
             navigate("/login", { replace: true });
         });
     }
@@ -68,7 +68,7 @@ export default function Header({ onAddTask }: HeaderProps) {
                         </div>
                     )}
 
-                    <AddTaskBtn buttonText="Nova Tarefa" onClick={onAddTask} />
+                    {onAddTask && <AddTaskBtn buttonText="Nova Tarefa" onClick={onAddTask} />}
 
                     <button
                         type="button"
