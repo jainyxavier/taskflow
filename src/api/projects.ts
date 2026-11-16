@@ -5,6 +5,9 @@ import type {
     ListProjectsParams,
     PaginatedProjects,
     Project,
+    ProjectDetail,
+    ProjectMember,
+    ProjectRole,
 } from "../types/project";
 
 export class ProjectRequestError extends Error {
@@ -23,6 +26,48 @@ export class ProjectRequestError extends Error {
         this.status = options?.status;
         this.fields = options?.fields ?? {};
     }
+}
+
+export class ProjectMemberRequestError extends Error {
+    status?: number;
+
+    constructor(message: string, status?: number) {
+        super(message);
+        this.name = "ProjectMemberRequestError";
+        this.status = status;
+    }
+}
+
+function mapMemberError(error: unknown, fallback: string): never {
+    if (!isAxiosError(error)) {
+        throw new ProjectMemberRequestError("Não foi possível conectar ao servidor");
+    }
+
+    if (!error.response) {
+        throw new ProjectMemberRequestError("Não foi possível conectar ao servidor");
+    }
+
+    const status = error.response.status;
+
+    if (status === 403) {
+        throw new ProjectMemberRequestError(
+            "Você não tem permissão para esta ação",
+            status,
+        );
+    }
+
+    if (status === 409) {
+        throw new ProjectMemberRequestError(
+            "Este usuário já faz parte do projeto",
+            status,
+        );
+    }
+
+    if (status === 404) {
+        throw new ProjectMemberRequestError("Recurso não encontrado", status);
+    }
+
+    throw new ProjectMemberRequestError(fallback, status);
 }
 
 function mapCreateError(error: unknown): never {
@@ -107,4 +152,69 @@ export async function createProject(input: CreateProjectInput): Promise<Project>
     } catch (error) {
         mapCreateError(error);
     }
+}
+
+export async function getProject(projectId: string): Promise<ProjectDetail> {
+    const { data } = await api.get<ProjectDetail>(`/projects/${projectId}`);
+    return data;
+}
+
+export async function addProjectMember(
+    projectId: string,
+    input: { userId: string; role: ProjectRole },
+): Promise<ProjectMember> {
+    try {
+        const { data } = await api.post<ProjectMember>(
+            `/projects/${projectId}/members`,
+            input,
+        );
+        return data;
+    } catch (error) {
+        mapMemberError(error, "Não foi possível adicionar o membro");
+    }
+}
+
+export async function updateProjectMemberRole(
+    projectId: string,
+    userId: string,
+    role: ProjectRole,
+): Promise<ProjectMember> {
+    try {
+        const { data } = await api.patch<ProjectMember>(
+            `/projects/${projectId}/members/${userId}`,
+            { role },
+        );
+        return data;
+    } catch (error) {
+        mapMemberError(error, "Não foi possível atualizar a role");
+    }
+}
+
+export async function removeProjectMember(
+    projectId: string,
+    userId: string,
+): Promise<void> {
+    try {
+        await api.delete(`/projects/${projectId}/members/${userId}`);
+    } catch (error) {
+        mapMemberError(error, "Não foi possível remover o membro");
+    }
+}
+
+type CountResponse = {
+    total: number;
+};
+
+export async function getProjectStoryCount(projectId: string): Promise<number> {
+    const { data } = await api.get<CountResponse>(`/stories/project/${projectId}`, {
+        params: { page: 1, limit: 1 },
+    });
+    return data.total;
+}
+
+export async function getProjectSprintCount(projectId: string): Promise<number> {
+    const { data } = await api.get<CountResponse>(`/sprints/project/${projectId}`, {
+        params: { page: 1, limit: 1 },
+    });
+    return data.total;
 }

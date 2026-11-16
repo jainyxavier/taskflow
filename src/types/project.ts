@@ -1,5 +1,19 @@
 export type ProjectStatus = "active" | "archived" | "on_hold";
 
+export type ProjectRole = "owner" | "admin" | "developer" | "viewer";
+
+export type ProjectMemberUser = {
+    id: string;
+    name: string;
+    email: string;
+};
+
+export type ProjectMember = {
+    userId: string;
+    role: ProjectRole | string;
+    user: ProjectMemberUser;
+};
+
 export type Project = {
     id: string;
     name: string;
@@ -8,6 +22,10 @@ export type Project = {
     status: ProjectStatus | string;
     ownerId: string;
     createdAt: string;
+};
+
+export type ProjectDetail = Project & {
+    members: ProjectMember[];
 };
 
 export type PaginatedProjects = {
