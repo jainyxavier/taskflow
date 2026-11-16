@@ -4,6 +4,7 @@ type ButtonProps = {
     className?: string;
     onClick?: () => void;
     type?: "button" | "submit" | "reset";
+    disabled?: boolean;
     "aria-label"?: string;
 };
 
@@ -18,14 +19,16 @@ export default function Button({
     className = "",
     onClick,
     type = "button",
+    disabled = false,
     "aria-label": ariaLabel,
 }: ButtonProps) {
     return (
         <button
             type={type}
             onClick={onClick}
+            disabled={disabled}
             aria-label={ariaLabel}
-            className={`inline-flex items-center justify-center gap-1 rounded-md bg-[#7C3AED] font-medium text-white cursor-pointer transition-colors hover:bg-[#6D28D9] active:bg-[#5B21B6] ${sizeClasses[size]} ${className}`}
+            className={`inline-flex items-center justify-center gap-1 rounded-md bg-[#7C3AED] font-medium text-white transition-colors hover:bg-[#6D28D9] active:bg-[#5B21B6] disabled:cursor-wait disabled:opacity-70 ${disabled ? "cursor-wait" : "cursor-pointer"} ${sizeClasses[size]} ${className}`}
         >
             {children}
         </button>
