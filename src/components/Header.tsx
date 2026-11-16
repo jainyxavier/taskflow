@@ -61,7 +61,7 @@ export default function Header() {
                             </span>
                             <p className="hidden min-w-0 flex-col leading-tight sm:flex">
                                 <span className="text-xs font-medium text-[#6B7280]">Olá,</span>
-                                <span className="max-w-40 truncate text-sm font-semibold text-[#111827] lg:max-w-56">
+                                <span className="max-w-40 truncate text-base font-semibold text-[#111827] lg:max-w-56">
                                     {user.name}
                                 </span>
                             </p>
